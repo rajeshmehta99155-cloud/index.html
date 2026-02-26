@@ -1,1 +1,167 @@
 # index.html
+<!DOCTYPE html>
+<html>
+<head>
+<title>SkyCrash Ultimate</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+}
+
+#loginBox, #gameBox{
+  margin-top:80px;
+}
+
+input{
+  padding:10px;
+  margin:5px;
+  border-radius:5px;
+  border:none;
+}
+
+button{
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.loginBtn{ background:#2563eb; color:white; }
+.startBtn{ background:#16a34a; color:white; }
+.cashBtn{ background:#dc2626; color:white; }
+
+#multiplier{
+  font-size:50px;
+  margin:20px;
+  color:#22d3ee;
+}
+
+canvas{
+  background:#1e293b;
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginBox">
+<h2>SkyCrash Login</h2>
+<input type="text" placeholder="Username" id="username"><br>
+<input type="password" placeholder="Password"><br>
+<button class="loginBtn" onclick="login()">Login</button>
+</div>
+
+<!-- GAME -->
+<div id="gameBox" style="display:none;">
+<h2>Balance: ₹<span id="balance">1000</span></h2>
+<input type="number" id="bet" placeholder="Bet Amount"><br>
+
+<div id="multiplier">1.00x</div>
+
+<button class="startBtn" onclick="startGame()">Start</button>
+<button class="cashBtn" onclick="cashOut()">Cash Out</button>
+
+<br>
+<canvas id="graph" width="300" height="150"></canvas>
+</div>
+
+<audio id="beep">
+<source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg">
+</audio>
+
+<script>
+let balance = 1000;
+let betAmount = 0;
+let multiplier = 1;
+let crashPoint = 0;
+let interval;
+let playing = false;
+
+let canvas = document.getElementById("graph");
+let ctx = canvas.getContext("2d");
+let x = 0;
+
+function login(){
+  let user = document.getElementById("username").value;
+  if(user == ""){
+    alert("Enter Username");
+    return;
+  }
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("gameBox").style.display="block";
+}
+
+function drawGraph(){
+  ctx.fillStyle="#1e293b";
+  ctx.fillRect(0,0,300,150);
+  ctx.beginPath();
+  ctx.moveTo(0,150);
+
+  for(let i=0;i<x;i++){
+    ctx.lineTo(i,150-(i*0.5));
+  }
+
+  ctx.strokeStyle="#22d3ee";
+  ctx.stroke();
+}
+
+function startGame(){
+  if(playing) return;
+
+  betAmount = parseInt(document.getElementById("bet").value);
+
+  if(!betAmount || betAmount > balance){
+    alert("Invalid Bet!");
+    return;
+  }
+
+  balance -= betAmount;
+  document.getElementById("balance").innerText = balance;
+
+  multiplier = 1;
+  crashPoint = (Math.random()*8+1).toFixed(2);
+  playing = true;
+  x = 0;
+
+  interval = setInterval(()=>{
+    multiplier += 0.05;
+    x += 2;
+
+    document.getElementById("multiplier").innerText = multiplier.toFixed(2)+"x";
+    drawGraph();
+
+    document.getElementById("beep").play();
+
+    if(multiplier >= crashPoint){
+      clearInterval(interval);
+      alert("💥 Crashed at "+crashPoint+"x");
+      playing = false;
+    }
+
+  },100);
+}
+
+function cashOut(){
+  if(!playing) return;
+
+  clearInterval(interval);
+
+  let win = betAmount * multiplier;
+  balance += Math.floor(win);
+
+  document.getElementById("balance").innerText = balance;
+  alert("🎉 You won ₹"+Math.floor(win));
+
+  playing = false;
+}
+</script>
+
+</body>
+</html>
